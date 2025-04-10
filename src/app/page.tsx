@@ -542,6 +542,7 @@ export default function Game() {
 							boardDimension={boardDimension}
 							onClick={handleMove}
 							isSolving={isSolving}
+							checkIsSolved={isSolved}
 						/>
 					)}
 				</div>
