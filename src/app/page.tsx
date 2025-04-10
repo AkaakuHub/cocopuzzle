@@ -87,6 +87,7 @@ export default function Game() {
 
 	// 自動解決中かどうかのフラグ
 	const [isSolving, setIsSolving] = useState(false);
+	const [isManualMode, setIsManualMode] = useState(true);
 
 	// トースト通知の状態
 	const [toast, setToast] = useState({
@@ -167,10 +168,7 @@ export default function Game() {
 				setClearTime(time);
 
 				// 完成時の処理：トースト表示と紙吹雪
-				showToast(
-					`完成！おめでとうございます！タイム: ${formatTime(time)}`,
-					"success",
-				);
+				showToast("完成！おめでとうございます！", "success");
 				setShowConfetti(true);
 				setTimeout(() => {
 					setShowConfetti(false);
@@ -260,7 +258,8 @@ export default function Game() {
 	const autoSolve = async () => {
 		if (isSolving) return;
 		setIsSolving(true);
-
+		setIsManualMode(false);
+    setTime(0);
 		// 自動解答時はタイマーを停止
 		setIsTimerRunning(false);
 
@@ -299,10 +298,7 @@ export default function Game() {
 						setTimeout(() => {
 							if (isSolved(newState)) {
 								setClearTime(time);
-								showToast(
-									`完成！おめでとうございます！タイム: ${formatTime(time)}`,
-									"success",
-								);
+								showToast("完成！", "success");
 								setShowConfetti(true);
 								setTimeout(() => {
 									setShowConfetti(false);
@@ -314,10 +310,8 @@ export default function Game() {
 
 					// 次の移動まで待機
 					// 待機時間は、移動の全体がある程度一定になるように調整
-					const tempDelay = 10000 / solutionMoves.length;
 					// ただし最小時間と最大時間を設定
-					const delay = Math.max(1, Math.min(tempDelay, 500));
-					await new Promise((resolve) => setTimeout(resolve, delay));
+					await new Promise((resolve) => setTimeout(resolve, 100));
 				}
 			}
 		} catch (e) {
@@ -426,7 +420,7 @@ export default function Game() {
 							<select
 								value={boardDimension}
 								onChange={handleDimensionChange}
-								className="ml-2 p-1 border rounded"
+								className="ml-2 p-1 border rounded disabled:bg-gray-400"
 								disabled={isSolving}
 							>
 								<option value="2">2x2</option>
@@ -437,7 +431,6 @@ export default function Game() {
 							</select>
 						</label>
 
-						{/* タイマー表示 */}
 						<div className="text-lg font-mono font-semibold">
 							{formatTime(time)}
 						</div>
@@ -447,7 +440,7 @@ export default function Game() {
 						{gameStarted && (
 							<button
 								type="button"
-								className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+								className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:brightness-50"
 								onClick={() => {
 									shuffleBoard();
 									showToast("パズルをシャッフルしました！", "info");
@@ -459,7 +452,7 @@ export default function Game() {
 						)}
 						<button
 							type="button"
-							className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400"
+							className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:brightness-50"
 							onClick={() => fileInputRef.current?.click()}
 							disabled={isSolving}
 						>
@@ -468,7 +461,7 @@ export default function Game() {
 						{uploadedImage && (
 							<button
 								type="button"
-								className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400"
+								className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:brightness-50"
 								onClick={autoSolve}
 								disabled={isSolving}
 							>
@@ -478,8 +471,7 @@ export default function Game() {
 					</div>
 				</div>
 
-				{/* クリアタイム表示 */}
-				{clearTime !== null && (
+				{isManualMode && clearTime !== null && (
 					<div className="bg-green-100 border-2 border-green-500 rounded-lg p-4 mb-4 text-center">
 						<p className="text-green-700 text-sm">CLEAR TIME</p>
 						<p className="text-3xl font-bold text-green-800 font-mono">
