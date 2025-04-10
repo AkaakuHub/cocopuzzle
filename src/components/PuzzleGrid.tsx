@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import clsx from "clsx";
+import { useEffect, useRef, useState } from "react";
 
 // スライドパズルのコンテナコンポーネント
 export const PuzzleGrid = ({
@@ -18,6 +19,7 @@ export const PuzzleGrid = ({
 }) => {
 	// tile要素への参照を保持
 	const tileRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+	const [showSolved, setShowSolved] = useState(false);
 
 	// 前回の位置を保持するためのref
 	const prevPositionsRef = useRef<Record<number, number>>({});
@@ -59,6 +61,16 @@ export const PuzzleGrid = ({
 		});
 	}, [tilePositions, boardDimension]);
 
+	useEffect(() => {
+		const isSolved = checkIsSolved(tilePositions);
+		// 即座に状態を更新せず、短いタイムアウトを設ける
+		const timer = setTimeout(() => {
+			setShowSolved(isSolved);
+		}, 50);
+
+		return () => clearTimeout(timer);
+	}, [tilePositions, checkIsSolved]);
+
 	return (
 		<div className="relative mx-auto mt-4 w-full aspect-square max-w-[280px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[480px] border border-gray-300">
 			{tilePositions.map((num, position) =>
@@ -90,32 +102,31 @@ export const PuzzleGrid = ({
 					</button>
 				) : (
 					// 空白タイルの位置を示すためのダミー要素
-					checkIsSolved(tilePositions) && (
-						<div
-							key={num}
-							className="select-none flex justify-center items-center border border-solid absolute text-center cursor-pointer rounded-sm shadow-md bg-white border-amber-100 hover:bg-amber-50 font-bold"
-							style={{
-								width: `${100 / boardDimension}%`,
-								height: `${100 / boardDimension}%`,
-								transform: `translate(${(position % boardDimension) * 100}%, ${
-									Math.floor(position / boardDimension) * 100
-								}%)`,
-								fontSize: `${Math.max(16, 120 / boardDimension)}px`,
-								backgroundImage: uploadedImage
-									? `url(${uploadedImage})`
-									: "none",
-								backgroundSize: `${boardDimension * 100}%`,
-								backgroundPosition: `-${
-									((tilePositions.length - 1) % boardDimension) * 100
-								}% -${
-									Math.floor((tilePositions.length - 1) / boardDimension) * 100
-								}%`,
-								zIndex: 5,
-							}}
-						>
-							{!uploadedImage && num}
-						</div>
-					)
+					<div
+						key={num}
+						className={clsx(
+							"select-none flex justify-center items-center border border-solid absolute text-center rounded-sm shadow-md bg-white border-amber-100 hover:bg-amber-50 font-bold transition-opacity duration-1000",
+							showSolved ? "opacity-100 cursor-pointer" : "opacity-0",
+						)}
+						style={{
+							width: `${100 / boardDimension}%`,
+							height: `${100 / boardDimension}%`,
+							transform: `translate(${(position % boardDimension) * 100}%, ${
+								Math.floor(position / boardDimension) * 100
+							}%)`,
+							fontSize: `${Math.max(16, 120 / boardDimension)}px`,
+							backgroundImage: uploadedImage ? `url(${uploadedImage})` : "none",
+							backgroundSize: `${boardDimension * 100}%`,
+							backgroundPosition: `-${
+								((tilePositions.length - 1) % boardDimension) * 100
+							}% -${
+								Math.floor((tilePositions.length - 1) / boardDimension) * 100
+							}%`,
+							zIndex: 5,
+						}}
+					>
+						{!uploadedImage && num}
+					</div>
 				),
 			)}
 		</div>
