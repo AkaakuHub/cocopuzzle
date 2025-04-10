@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import { useRef, useState } from "react";
 
 // タイルコンポーネント
 const Tile = ({
@@ -49,14 +49,12 @@ const Tile = ({
 	);
 };
 export default function Game() {
-	// 盤面サイズ選択：初期は 4×4 をデフォルト
-	const [boardDimension, setBoardDimension] = React.useState(4);
+	// 盤面サイズ選択
+	const [boardDimension, setBoardDimension] = useState(3);
 	const totalCells = boardDimension * boardDimension;
 
-	// 自動解答の際の動作間隔 (ミリ秒)
-	const [moveDelay, setMoveDelay] = React.useState(500);
 	// 自動解決中かどうかのフラグ
-	const [isSolving, setIsSolving] = React.useState(false);
+	const [isSolving, setIsSolving] = useState(false);
 
 	const boardDisplaySize = 240;
 	const tileSize = boardDisplaySize / boardDimension;
@@ -73,10 +71,15 @@ export default function Game() {
 	};
 
 	// 初期状態は解の盤面の状態にする
-	const [tilePositions, setTilePositions] = React.useState(getSolvedState());
-	const [uploadedImage, setUploadedImage] = React.useState<string | null>(null);
-	const [gameStarted, setGameStarted] = React.useState(false);
-	const fileInputRef = React.useRef<HTMLInputElement>(null);
+	const [tilePositions, setTilePositions] = useState(getSolvedState());
+	const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+	const [gameStarted, setGameStarted] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	// シャッフル直後の状態を保存
+	const [shuffledState, setShuffledState] = useState<number[]>([]);
+	// シャッフル時の移動履歴を保存する配列
+	const [moveHistory, setMoveHistory] = useState<number[]>([]);
 
 	// --- タイル移動ロジック ---
 	// 新しい moveTile：指定されたタイルが空白と隣接していれば、両者を入れ替える
@@ -183,11 +186,64 @@ export default function Game() {
 
 		// 最終的な状態と移動履歴を保存
 		setTilePositions(state);
+		setShuffledState([...state]); // シャッフル直後の状態を記録
 		setMoveHistory(history);
 	};
 
-	// シャッフル時の移動履歴を保存する配列
-	const [moveHistory, setMoveHistory] = React.useState<number[]>([]);
+	// Auto Solve ボタンが押されたときの処理
+	const autoSolve = async () => {
+		if (isSolving) return;
+		setIsSolving(true);
+
+		try {
+			// シャッフル時の移動履歴を逆順に適用
+			const solutionMoves = [...moveHistory].reverse();
+
+			if (solutionMoves.length === 0) {
+				window.alert("解答する手順がありません。再度シャッフルしてください。");
+				setIsSolving(false);
+				return;
+			}
+
+			// まずシャッフル直後の状態に戻す
+			setTilePositions(shuffledState);
+			let currentState = [...shuffledState];
+
+			// アニメーションのためにわずかに遅延
+			await new Promise((resolve) => setTimeout(resolve, 300));
+
+			// 記録された移動を逆順に適用
+			for (let i = 0; i < solutionMoves.length; i++) {
+				const move = solutionMoves[i];
+				const newState = moveTile(currentState, move);
+
+				if (newState) {
+					currentState = newState;
+					setTilePositions(newState);
+
+					// 最後の移動で完成したか確認
+					if (i === solutionMoves.length - 1) {
+						setTimeout(() => {
+							if (isSolved(newState)) {
+								window.alert("完成！");
+							}
+							setIsSolving(false);
+						}, 300);
+					}
+
+					// 次の移動まで待機
+					// 待機時間は、移動の全体がある程度一定になるように調整
+					const tempDelay = 10000 / solutionMoves.length;
+					// ただし最小時間と最大時間を設定
+          const delay = Math.max(1, Math.min(tempDelay, 500));
+					await new Promise((resolve) => setTimeout(resolve, delay));
+				}
+			}
+		} catch (e) {
+			console.error("Auto solve error:", e);
+			setIsSolving(false);
+		}
+	};
 
 	// --- 盤面サイズ選択処理 ---
 	const handleDimensionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -196,17 +252,15 @@ export default function Game() {
 		const newTotal = dim * dim;
 
 		// 新しい盤面の solved state を設定
-		setTilePositions(() => {
-			const state = new Array(newTotal);
-			for (let i = 0; i < newTotal - 1; i++) {
-				state[i] = i + 1;
-			}
-			state[newTotal - 1] = 0;
-			return state;
-		});
+		const newState = new Array(newTotal);
+		for (let i = 0; i < newTotal - 1; i++) {
+			newState[i] = i + 1;
+		}
+		newState[newTotal - 1] = 0;
 
-		// 移動履歴をリセット
-		setMoveHistory([]);
+		setTilePositions(newState);
+		setShuffledState([]); // シャッフル状態をリセット
+		setMoveHistory([]); // 移動履歴をリセット
 
 		if (uploadedImage && !gameStarted) {
 			shuffleBoard();
@@ -227,50 +281,6 @@ export default function Game() {
 				}
 			};
 			reader.readAsDataURL(file);
-		}
-	};
-
-	// Auto Solve ボタンが押されたときの処理
-	const autoSolve = async () => {
-		if (isSolving) return;
-		setIsSolving(true);
-
-		try {
-			// シャッフル時の移動履歴を逆順に適用
-			const solutionMoves = [...moveHistory].reverse();
-
-			if (solutionMoves.length === 0) {
-				window.alert("解答する手順がありません。再度シャッフルしてください。");
-				setIsSolving(false);
-				return;
-			}
-
-			let currentState = [...tilePositions];
-			for (let i = 0; i < solutionMoves.length; i++) {
-				const move = solutionMoves[i];
-				const newState = moveTile(currentState, move);
-
-				if (newState) {
-					currentState = newState;
-					setTilePositions(newState);
-
-					// 最後の移動で完成したか確認
-					if (i === solutionMoves.length - 1) {
-						setTimeout(() => {
-							if (isSolved(newState)) {
-								window.alert("完成！");
-							}
-							setIsSolving(false);
-						}, 300);
-					}
-
-					// 次の移動まで待機
-					await new Promise((resolve) => setTimeout(resolve, moveDelay));
-				}
-			}
-		} catch (e) {
-			console.error("Auto solve error:", e);
-			setIsSolving(false);
 		}
 	};
 
@@ -325,23 +335,6 @@ export default function Game() {
 							</button>
 						)}
 					</div>
-					{uploadedImage && (
-						<div className="flex items-center gap-2">
-							<label className="text-sm text-gray-700" htmlFor="moveDelay">
-								Delay (ms):
-							</label>
-							<input
-								type="range"
-								min="100"
-								max="2000"
-								step="100"
-								value={moveDelay}
-								onChange={(e) => setMoveDelay(Number.parseInt(e.target.value))}
-								disabled={isSolving}
-							/>
-							<span className="text-sm text-gray-700">{moveDelay}</span>
-						</div>
-					)}
 				</div>
 				{!uploadedImage ? (
 					<p className="text-center text-gray-500">
