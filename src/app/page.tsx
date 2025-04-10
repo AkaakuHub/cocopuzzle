@@ -247,8 +247,8 @@ export default function Game() {
 		// 移動履歴をリセット
 		const history: number[] = [];
 
-		// ランダムな回数（最小100回、最大300回）の移動を適用
-		const movesCount = Math.floor(Math.random() * 201) + 100;
+		// ランダムな回数（最小40回、最大90回）の移動を適用
+		const movesCount = Math.floor(Math.random() * 50) + 40;
 		console.log(`Shuffling with ${movesCount} moves`);
 
 		for (let i = 0; i < movesCount; i++) {
