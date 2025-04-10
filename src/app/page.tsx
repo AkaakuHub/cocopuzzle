@@ -511,7 +511,7 @@ export default function Game() {
 	const [showCompleteImage, setShowCompleteImage] = useState(false);
 
 	return (
-		<div className="flex flex-col items-center justify-center bg-gray-50 h-[90vh] p-4">
+		<div className="flex flex-col items-center justify-center h-[90vh] p-4">
 			{showConfetti && (
 				<Confetti
 					width={window.innerWidth}
