@@ -2,6 +2,7 @@
 import { useRef, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { clsx } from "clsx";
+import { useBasePath } from "@/components/useBasePath";
 
 // react-confetti を動的にインポート（サーバーサイドレンダリング対策）
 const Confetti = dynamic(() => import("react-confetti"), { ssr: false });
@@ -130,6 +131,7 @@ const Tile = ({
 };
 
 export default function Game() {
+  const basePath = useBasePath();
 	// 盤面サイズ選択
 	const [boardDimension, setBoardDimension] = useState(3);
 	const totalCells = boardDimension * boardDimension;
@@ -533,7 +535,7 @@ export default function Game() {
 			<div>
 				<div className="text-center mb-6 flex flex-row items-center justify-center gap-4">
 					<img
-						src="/images/icon.webp"
+						src={`${basePath}/images/icon.webp`}
 						alt="ココパズル"
 						className="w-24 h-24 mb-4"
 					/>
@@ -572,6 +574,7 @@ export default function Game() {
 								className={clsx(
 									"text-lg font-mono font-semibold text-center",
 									clearTime &&
+										isManualMode &&
 										"text-white bg-green-500 border-2 border-green-700 rounded-full",
 								)}
 							>

@@ -14,7 +14,8 @@
     "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-confetti": "^6.4.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-hooks": "^1.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
