@@ -35,6 +35,54 @@ const Toast = ({
 	);
 };
 
+// モーダルコンポーネント
+const Modal = ({
+	isOpen,
+	onClose,
+	image,
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	image: string | null;
+}) => {
+	if (!isOpen) return null;
+
+	return (
+		<button
+			type="button"
+			className="fixed inset-0 bg-slate-700/50 bg-opacity-50 z-50 flex items-center justify-center p-4"
+			onClick={onClose}
+		>
+			<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
+				<div className="flex justify-between items-center mb-4">
+					<h3 className="text-xl font-bold">完成図</h3>
+					<button
+						type="button"
+						onClick={onClose}
+						className="text-slate-800 font-bold"
+					>
+						✕
+					</button>
+				</div>
+				<div className="relative mx-auto mt-18 w-full aspect-square max-w-[280px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[480px]">
+					{image ? (
+						<div
+							className="w-full h-full bg-no-repeat bg-cover rounded"
+							style={{
+								backgroundImage: `url(${image})`,
+								backgroundPosition: "center",
+								backgroundSize: "contain",
+							}}
+						/>
+					) : (
+						<p className="text-center text-gray-500">画像がありません</p>
+					)}
+				</div>
+			</div>
+		</button>
+	);
+};
+
 // タイルコンポーネント - サイズをTailwindクラスで制御するように修正
 const Tile = ({
 	position,
@@ -65,7 +113,7 @@ const Tile = ({
 	return (
 		<button
 			type="button"
-			className="select-none border border-solid p-0 absolute text-center transition-[top,left] duration-300 ease-[cubic-bezier(.1,-0.35,.21,1.62)] cursor-pointer rounded-sm shadow-sm bg-white"
+			className="select-none border border-solid p-0 absolute text-center transition-all duration-300 ease-[cubic-bezier(.1,-0.35,.21,1.62)] cursor-pointer rounded-sm shadow-sm bg-white border-amber-50 hover:bg-amber-50"
 			style={{
 				top: `${Math.floor(position / boardDimension) * tilePercentage}%`,
 				left: `${(position % boardDimension) * tilePercentage}%`,
@@ -455,6 +503,9 @@ export default function Game() {
 		return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
 	};
 
+	// モーダル表示制御
+	const [showCompleteImage, setShowCompleteImage] = useState(false);
+
 	return (
 		<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
 			{showConfetti && (
@@ -472,27 +523,63 @@ export default function Game() {
 				type={toast.type}
 			/>
 
+			<Modal
+				isOpen={showCompleteImage}
+				onClose={() => setShowCompleteImage(false)}
+				image={uploadedImage}
+			/>
+
 			<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
 				<div className="flex flex-col gap-3 mb-4">
-					<div className="flex justify-between items-center">
-						<label className="text-sm font-medium text-gray-700">
-							マスの数
-							<select
-								value={boardDimension}
-								onChange={handleDimensionChange}
-								className="ml-2 p-1 border rounded disabled:bg-gray-400"
-								disabled={isSolving}
-							>
-								<option value="2">2x2</option>
-								<option value="3">3x3</option>
-								<option value="4">4x4</option>
-								<option value="5">5x5</option>
-								<option value="6">6x6</option>
-							</select>
-						</label>
+					{/* ヘッダー部分を3カラムにして中央にタイマーを配置 */}
+					<div className="grid grid-cols-3 items-center">
+						<div className="flex items-center">
+							<label className="text-sm font-medium text-gray-700">
+								マスの数
+								<select
+									value={boardDimension}
+									onChange={handleDimensionChange}
+									className="ml-2 p-1 border rounded disabled:bg-gray-400"
+									disabled={isSolving}
+								>
+									<option value="2">2x2</option>
+									<option value="3">3x3</option>
+									<option value="4">4x4</option>
+									<option value="5">5x5</option>
+									<option value="6">6x6</option>
+								</select>
+							</label>
+						</div>
 
-						<div className="text-lg font-mono font-semibold">
+						<div className="text-lg font-mono font-semibold text-center">
 							{formatTime(time)}
+						</div>
+
+						<div className="flex justify-end">
+							<button
+								type="button"
+								className="p-2 text-slate-800 hover:bg-gray-100 rounded-full"
+								onClick={() => setShowCompleteImage(true)}
+								title="完成イメージを表示"
+							>
+								{/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="icon icon-tabler icons-tabler-outline icon-tabler-eye"
+								>
+									<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+									<path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+									<path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
+								</svg>
+							</button>
 						</div>
 					</div>
 
@@ -503,6 +590,7 @@ export default function Game() {
 								className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:brightness-50"
 								onClick={() => {
 									shuffleBoard();
+									setIsManualMode(true);
 									showToast("パズルをシャッフルしました！", "info");
 								}}
 								disabled={!uploadedImage || isSolving}
