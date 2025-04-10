@@ -196,8 +196,8 @@ export default function Game() {
 		// 移動履歴をリセット
 		const history: number[] = [];
 
-		// ランダムな回数（最小10回、最大200回）の移動を適用
-		const movesCount = Math.floor(Math.random() * 191) + 10;
+		// ランダムな回数（最小100回、最大300回）の移動を適用
+		const movesCount = Math.floor(Math.random() * 201) + 100;
 		console.log(`Shuffling with ${movesCount} moves`);
 
 		for (let i = 0; i < movesCount; i++) {
@@ -259,7 +259,7 @@ export default function Game() {
 		if (isSolving) return;
 		setIsSolving(true);
 		setIsManualMode(false);
-    setTime(0);
+		setTime(0);
 		// 自動解答時はタイマーを停止
 		setIsTimerRunning(false);
 
@@ -349,23 +349,83 @@ export default function Game() {
 	};
 
 	// --- 画像アップロード処理 ---
-	const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleImageUpload = async (
+		event: React.ChangeEvent<HTMLInputElement>,
+	) => {
 		const file = event.target.files?.[0];
 		if (file?.type.match("image.*")) {
 			const reader = new FileReader();
-			reader.onload = (e) => {
-				setUploadedImage(e.target?.result as string);
-				if (!gameStarted) {
-					shuffleBoard();
-					setGameStarted(true);
-					showToast(
-						"画像をアップロードしました！パズルを解いてみましょう",
-						"info",
-					);
+			reader.onload = async (e) => {
+				try {
+					const imageUrl = e.target?.result as string;
+					// 画像を正方形に切り抜く
+					const croppedImageUrl = await cropImageToSquare(imageUrl);
+
+					setUploadedImage(croppedImageUrl);
+					if (!gameStarted) {
+						shuffleBoard();
+						setGameStarted(true);
+						showToast(
+							"画像をアップロードしました！パズルを解いてみましょう",
+							"info",
+						);
+					}
+				} catch (error) {
+					console.error("Error processing image:", error);
+					showToast("画像の処理中にエラーが発生しました", "error");
 				}
 			};
 			reader.readAsDataURL(file);
 		}
+	};
+
+	// 画像を正方形に切り抜く関数
+	const cropImageToSquare = (imageUrl: string): Promise<string> => {
+		return new Promise((resolve, reject) => {
+			const img = new Image();
+			img.crossOrigin = "anonymous"; // CORSエラー対策
+
+			img.onload = () => {
+				// 元画像のサイズを取得
+				const { width, height } = img;
+
+				// 正方形のサイズを決定（短い方の辺に合わせる）
+				const size = Math.min(width, height);
+
+				// 中央から切り抜くための開始位置を計算
+				const startX = Math.floor((width - size) / 2);
+				const startY = Math.floor((height - size) / 2);
+
+				// Canvas要素を作成して正方形に切り抜く
+				const canvas = document.createElement("canvas");
+				canvas.width = size;
+				canvas.height = size;
+				const ctx = canvas.getContext("2d");
+
+				if (!ctx) {
+					reject(new Error("Canvas context could not be created"));
+					return;
+				}
+
+				// 画像を中央から切り抜いて描画
+				ctx.drawImage(img, startX, startY, size, size, 0, 0, size, size);
+
+				// データURLとして出力
+				try {
+					const dataUrl = canvas.toDataURL("image/jpeg", 0.9); // JPEG形式で出力、品質0.9
+					resolve(dataUrl);
+				} catch (e) {
+					reject(e);
+				}
+			};
+
+			img.onerror = (e) => {
+				reject(new Error("Failed to load image"));
+				console.error("Image load error:", e);
+			};
+
+			img.src = imageUrl;
+		});
 	};
 
 	// タイマー機能の追加
