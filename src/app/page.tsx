@@ -2,21 +2,41 @@
 import React from "react";
 
 // タイルコンポーネント
-const Tile = ({ position, num, onClick, image, tileSize }) => {
+const Tile = ({
+	position,
+	num,
+	onClick,
+	image,
+	tileSize,
+	boardDisplaySize,
+	boardDimension,
+}: {
+	position: number;
+
+	num: number;
+	onClick: (position: number) => void;
+	image: string | null;
+	tileSize: number;
+	boardDisplaySize: number;
+	boardDimension: number;
+}) => {
 	if (num === 0) return null;
+
+	// アップロード画像を使う場合、背景画像全体を盤面表示サイズに合わせる
 	const backgroundStyle = image
 		? {
 				backgroundImage: `url(${image})`,
-				backgroundSize: `${tileSize * Math.sqrt(window.totalCells)}px ${tileSize * Math.sqrt(window.totalCells)}px`,
-				backgroundPosition: `-${((num - 1) % Math.sqrt(window.totalCells)) * tileSize}px -${Math.floor((num - 1) / Math.sqrt(window.totalCells)) * tileSize}px`,
+				backgroundSize: `${boardDisplaySize}px ${boardDisplaySize}px`,
+				backgroundPosition: `-${((num - 1) % boardDimension) * tileSize}px -${Math.floor((num - 1) / boardDimension) * tileSize}px`,
 			}
 		: {};
 	return (
-		<div
+		<button
+			type="button"
 			className="select-none border border-solid p-0 absolute text-center transition-[top,left] duration-300 ease-[cubic-bezier(.1,-0.35,.21,1.62)] cursor-pointer rounded-sm shadow-sm bg-white"
 			style={{
-				top: Math.floor(position / window.boardDimension) * tileSize,
-				left: (position % window.boardDimension) * tileSize,
+				top: Math.floor(position / boardDimension) * tileSize,
+				left: (position % boardDimension) * tileSize,
 				width: `${tileSize}px`,
 				height: `${tileSize}px`,
 				lineHeight: `${tileSize}px`,
@@ -25,37 +45,23 @@ const Tile = ({ position, num, onClick, image, tileSize }) => {
 			onClick={() => onClick(position)}
 		>
 			{!image && num}
-		</div>
+		</button>
 	);
 };
 
-
-function isSolved(newState: any[]) {
-  // The solved state is when each tile is at its correct position
-  // For a solved state, tile 1 should be at position 0, tile 2 at position 1, etc.
-  // And the blank tile (0) should be at the last position (totalCells - 1)
-  
-  if (newState[0] !== window.totalCells - 1) return false;
-  
-  for (let i = 1; i < window.totalCells; i++) {
-    if (newState[i] !== i - 1) return false;
-  }
-  
-  return true;
-}
-
-
 export default function Game() {
-	// 盤面サイズ（2～6）の選択状態。初期は 4×4 をデフォルトにする。
+	// 盤面サイズ選択：初期は 4×4 をデフォルト
 	const [boardDimension, setBoardDimension] = React.useState(4);
 	const totalCells = boardDimension * boardDimension;
-	// window に一時的に保存（Tile コンポーネントで利用）
-	window.boardDimension = boardDimension;
-	window.totalCells = totalCells;
+	// 表示上の盤面サイズ(px)（背景画像のサイズとして固定）
+	const boardDisplaySize = 240;
+	// タイル1個あたりのサイズ
+	const tileSize = boardDisplaySize / boardDimension;
 
-	// solved state の定義：タイル番号 0（空白）は solvedState[0] に、その他は 1～totalCells-1 が順に
+	// solved state の定義：配列の index がタイル番号、値がそのタイルのセル位置
+	// 空白（タイル番号0）は右下（セル番号: totalCells - 1）に配置
 	const getSolvedState = () => {
-		let state = new Array(totalCells);
+		const state = new Array(totalCells);
 		state[0] = totalCells - 1;
 		for (let i = 1; i < totalCells; i++) {
 			state[i] = i - 1;
@@ -63,29 +69,25 @@ export default function Game() {
 		return state;
 	};
 
-	// パズル状態：配列の index がタイル番号、値がそのタイルのセル位置
 	const [tilePositions, setTilePositions] = React.useState(getSolvedState());
-	// 画像のアップロード状態
-	const [uploadedImage, setUploadedImage] = React.useState(null);
-	// ゲーム開始フラグ（画像アップロードと盤面サイズ選択済みならtrue）
+	// 画像アップロード状態
+	const [uploadedImage, setUploadedImage] = React.useState<string | null>(null);
+	// ゲーム開始フラグ：画像アップロード後にシャッフルして開始する
 	const [gameStarted, setGameStarted] = React.useState(false);
-	const fileInputRef = React.useRef(null);
-
-	// 表示するパズルのサイズ（全体の横幅などを固定、タイルサイズを動的に決定）
-	const boardDisplaySize = 240; // px
-	const tileSize = boardDisplaySize / boardDimension;
+	const fileInputRef = React.useRef<HTMLInputElement>(null);
 
 	// --- タイル移動ロジック ---
-	// tile（1～totalCells-1）の移動処理（空白タイルが state[0] に格納されている）
-	const moveTile = (state, tile) => {
+	// タイル (1～totalCells-1) の移動処理
+	const moveTile = (state: number[], tile: number) => {
 		const blankPos = state[0];
 		const tilePos = state[tile];
 		const rowBlank = Math.floor(blankPos / boardDimension);
 		const rowTile = Math.floor(tilePos / boardDimension);
 		const colBlank = blankPos % boardDimension;
 		const colTile = tilePos % boardDimension;
-		let newState = [...state];
-		// 横方向の移動
+		const newState = [...state];
+
+		// 横方向移動
 		if (rowBlank === rowTile) {
 			if (colTile < colBlank) {
 				for (let pos = colTile; pos < colBlank; pos++) {
@@ -95,7 +97,8 @@ export default function Game() {
 				}
 				newState[0] = tilePos;
 				return newState;
-			} else if (colTile > colBlank) {
+			}
+			if (colTile > colBlank) {
 				for (let pos = colBlank + 1; pos <= colTile; pos++) {
 					const cell = rowBlank * boardDimension + pos;
 					const movingTile = state.findIndex((v) => v === cell);
@@ -105,7 +108,7 @@ export default function Game() {
 				return newState;
 			}
 		}
-		// 縦方向の移動
+		// 縦方向移動
 		if (colBlank === colTile) {
 			if (rowTile < rowBlank) {
 				for (let row = rowTile; row < rowBlank; row++) {
@@ -115,7 +118,8 @@ export default function Game() {
 				}
 				newState[0] = tilePos;
 				return newState;
-			} else if (rowTile > rowBlank) {
+			}
+			if (rowTile > rowBlank) {
 				for (let row = rowBlank + 1; row <= rowTile; row++) {
 					const cell = row * boardDimension + colBlank;
 					const movingTile = state.findIndex((v) => v === cell);
@@ -128,21 +132,39 @@ export default function Game() {
 		return null;
 	};
 
-	// 手動クリックによる移動
-	const handleMove = (clickedPosition) => {
+	// ユーザーがタイルをクリックしたときの移動処理
+	const handleMove = (clickedPosition: number) => {
 		const tile = tilePositions.findIndex((pos) => pos === clickedPosition);
 		if (tile === -1 || tile === 0) return;
 		const newState = moveTile(tilePositions, tile);
 		if (newState) {
 			setTilePositions(newState);
-			// 移動後にパズルが完成したかチェック
 			if (isSolved(newState)) {
-				alert("完成！");
+				setTimeout(() => {
+					window.alert("完成！");
+				}, 300); // アニメーションが終わるまで少し待つ
 			}
 		}
 	};
 
-	// --- 解けるパズルの生成：合法な手順をランダムに movesCount 回適用 ---
+	// ゲームクリア判定（solved state と比較）
+	const isSolved = (state: number[]) => {
+		const solved = getSolvedState();
+		return solved.every((val, index) => val === state[index]);
+	};
+
+	// --- 解ける盤面の生成（合法な手順をランダムに適用するシャッフル） ---
+	const getNeighbors = (state: number[]) => {
+		const neighbors = [];
+		for (let tile = 1; tile < totalCells; tile++) {
+			const nextState = moveTile(state, tile);
+			if (nextState) {
+				neighbors.push({ move: tile, state: nextState });
+			}
+		}
+		return neighbors;
+	};
+
 	const shuffleBoard = (movesCount = totalCells * totalCells * 3) => {
 		let state = getSolvedState();
 		for (let i = 0; i < movesCount; i++) {
@@ -156,26 +178,14 @@ export default function Game() {
 		setTilePositions(state);
 	};
 
-	// 隣接状態の取得
-	const getNeighbors = (state) => {
-		const neighbors = [];
-		for (let tile = 1; tile < totalCells; tile++) {
-			const nextState = moveTile(state, tile);
-			if (nextState) {
-				neighbors.push({ move: tile, state: nextState });
-			}
-		}
-		return neighbors;
-	};
-
 	// --- 画像アップロード処理 ---
-	const handleImageUpload = (event) => {
-		const file = event.target.files[0];
-		if (file && file.type.match("image.*")) {
+	const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (file?.type.match("image.*")) {
 			const reader = new FileReader();
 			reader.onload = (e) => {
-				setUploadedImage(e.target.result);
-				// 画像アップロード後、もしゲームが未開始であれば盤面をシャッフルして開始
+				setUploadedImage(e.target?.result as string);
+				// 画像アップロード後、もしまだゲームが始まっていなければ盤面をシャッフルして開始
 				if (!gameStarted) {
 					shuffleBoard();
 					setGameStarted(true);
@@ -186,19 +196,15 @@ export default function Game() {
 	};
 
 	// --- 盤面サイズ選択処理 ---
-	const handleDimensionChange = (e) => {
-		const dim = parseInt(e.target.value);
+	const handleDimensionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		const dim = Number.parseInt(e.target.value);
 		setBoardDimension(dim);
-		// 盤面サイズが変更されたら新しい solved state でリセット
+		const newTotal = dim * dim;
+		// solved state に合わせて初期状態をリセット
 		setTilePositions(() => {
-			return (() => {
-				const newTotal = dim * dim;
-				window.boardDimension = dim;
-				window.totalCells = newTotal;
-				return [newTotal - 1, ...[...Array(newTotal - 1)].map((_, i) => i)];
-			})();
+			return [newTotal - 1, ...[...Array(newTotal - 1)].map((_, i) => i)];
 		});
-		// ゲーム開始前なら、画像がアップロード済みなら自動的にシャッフル
+		// ゲーム開始前なら、画像がアップロード済みであれば自動シャッフルして開始
 		if (uploadedImage && !gameStarted) {
 			shuffleBoard();
 			setGameStarted(true);
@@ -212,7 +218,7 @@ export default function Game() {
 					Slide Puzzle
 				</h1>
 				<div className="flex flex-col gap-4 mb-4">
-					{/* 盤面サイズ選択：ゲーム開始前に選択 */}
+					{/* 盤面サイズ選択（ゲーム開始前） */}
 					<label className="text-sm font-medium text-gray-700">
 						Board Size
 						<select
@@ -229,6 +235,7 @@ export default function Game() {
 					</label>
 					<div className="flex flex-wrap gap-2 justify-center">
 						<button
+							type="button"
 							className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
 							onClick={() => shuffleBoard()}
 							disabled={!uploadedImage}
@@ -236,14 +243,15 @@ export default function Game() {
 							Shuffle
 						</button>
 						<button
+							type="button"
 							className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400"
-							onClick={() => fileInputRef.current.click()}
+							onClick={() => fileInputRef.current?.click()}
 						>
 							Upload Image
 						</button>
 					</div>
 				</div>
-				{/* 画像がアップロードされていなければメッセージを表示 */}
+				{/* 画像未アップロードならメッセージ表示 */}
 				{!uploadedImage ? (
 					<p className="text-center text-gray-500">
 						Please upload an image to start.
@@ -255,10 +263,12 @@ export default function Game() {
 					>
 						{tilePositions.map((p, n) => (
 							<Tile
-								key={n}
+								key={p}
 								num={n}
 								position={p}
 								tileSize={tileSize}
+								boardDisplaySize={boardDisplaySize}
+								boardDimension={boardDimension}
 								onClick={(p) => handleMove(p)}
 								image={uploadedImage}
 							/>
