@@ -131,7 +131,7 @@ const Tile = ({
 };
 
 export default function Game() {
-  const basePath = useBasePath();
+	const basePath = useBasePath();
 	// 盤面サイズ選択
 	const [boardDimension, setBoardDimension] = useState(3);
 	const totalCells = boardDimension * boardDimension;
@@ -247,8 +247,9 @@ export default function Game() {
 		// 移動履歴をリセット
 		const history: number[] = [];
 
-		// ランダムな回数（最小40回、最大90回）の移動を適用
-		const movesCount = Math.floor(Math.random() * 50) + 40;
+		// ランダムな回数の移動を適用
+		// この際、マスの数によって移動回数を調整
+		const movesCount = Math.floor(Math.random() * 30) + 20 * boardDimension;
 		console.log(`Shuffling with ${movesCount} moves`);
 
 		for (let i = 0; i < movesCount; i++) {
