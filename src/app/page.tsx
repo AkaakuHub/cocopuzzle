@@ -122,31 +122,96 @@ export default function Game() {
 	};
 
 	// --- 解ける盤面の生成（合法な手順をランダムに適用するシャッフル） ---
-	// 盤面 state の各要素は、セルの内容（タイル番号）が入る
-	const getNeighbors = (state: number[]) => {
-		const neighbors = [];
-		// 盤面上の各セル（空白でないタイル）について、移動可能か試す
-		for (const stateItem of state) {
-			if (stateItem === 0) continue; // 空白は除く
-			const nextState = moveTile(state, stateItem);
-			if (nextState) {
-				neighbors.push({ move: stateItem, state: nextState });
+	// パズルをシャッフルし、その際の移動履歴を保存する
+	const shuffleBoard = () => {
+		// まずは解いた状態（正解）から始める
+		let state = getSolvedState();
+		// 移動履歴をリセット
+		const history: number[] = [];
+
+		// ランダムな回数（最小10回、最大300回）の移動を適用
+		const movesCount = Math.floor(Math.random() * 291) + 10;
+		console.log(`Shuffling with ${movesCount} moves`);
+
+		for (let i = 0; i < movesCount; i++) {
+			// 現在の状態において可能な移動を取得
+			const blankIndex = state.indexOf(0);
+			const possibleMoves: number[] = [];
+
+			// 上下左右の隣接タイルをチェック
+			// 上
+			if (blankIndex >= boardDimension) {
+				possibleMoves.push(state[blankIndex - boardDimension]);
+			}
+			// 下
+			if (blankIndex < totalCells - boardDimension) {
+				possibleMoves.push(state[blankIndex + boardDimension]);
+			}
+			// 左
+			if (blankIndex % boardDimension !== 0) {
+				possibleMoves.push(state[blankIndex - 1]);
+			}
+			// 右
+			if (blankIndex % boardDimension !== boardDimension - 1) {
+				possibleMoves.push(state[blankIndex + 1]);
+			}
+
+			// ランダムに移動を選択（直前の移動を元に戻す動きは避ける）
+			if (possibleMoves.length > 0) {
+				// 直前の移動を元に戻す動きを除外
+				let filteredMoves = possibleMoves;
+				if (history.length > 0) {
+					filteredMoves = possibleMoves.filter(
+						(move) => move !== history[history.length - 1],
+					);
+				}
+
+				// 有効な移動がなければ（通常は起こらないが）、全ての可能な移動から選択
+				const randomMove =
+					filteredMoves.length > 0
+						? filteredMoves[Math.floor(Math.random() * filteredMoves.length)]
+						: possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+
+				// 移動を適用し、履歴に記録
+				const newState = moveTile(state, randomMove);
+				if (newState) {
+					state = newState;
+					history.push(randomMove);
+				}
 			}
 		}
-		return neighbors;
+
+		// 最終的な状態と移動履歴を保存
+		setTilePositions(state);
+		setMoveHistory(history);
 	};
 
-	const shuffleBoard = (movesCount = totalCells * totalCells * 3) => {
-		let state = getSolvedState();
-		for (let i = 0; i < movesCount; i++) {
-			const neighbors = getNeighbors(state);
-			if (neighbors.length > 0) {
-				const randomNeighbor =
-					neighbors[Math.floor(Math.random() * neighbors.length)];
-				state = randomNeighbor.state;
+	// シャッフル時の移動履歴を保存する配列
+	const [moveHistory, setMoveHistory] = React.useState<number[]>([]);
+
+	// --- 盤面サイズ選択処理 ---
+	const handleDimensionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		const dim = Number.parseInt(e.target.value);
+		setBoardDimension(dim);
+		const newTotal = dim * dim;
+
+		// 新しい盤面の solved state を設定
+		setTilePositions(() => {
+			const state = new Array(newTotal);
+			for (let i = 0; i < newTotal - 1; i++) {
+				state[i] = i + 1;
 			}
+			state[newTotal - 1] = 0;
+			return state;
+		});
+
+		// 移動履歴をリセット
+		setMoveHistory([]);
+
+		if (uploadedImage && !gameStarted) {
+			shuffleBoard();
+			setGameStarted(true);
 		}
-		setTilePositions(state);
 	};
 
 	// --- 画像アップロード処理 ---
@@ -165,143 +230,17 @@ export default function Game() {
 		}
 	};
 
-	// --- 盤面サイズ選択処理 ---
-	const handleDimensionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const dim = Number.parseInt(e.target.value);
-		setBoardDimension(dim);
-		const newTotal = dim * dim;
-		setTilePositions(() => {
-			// 新しい盤面の solved state を返す
-			const state = new Array(newTotal);
-			for (let i = 0; i < newTotal - 1; i++) {
-				state[i] = i + 1;
-			}
-			state[newTotal - 1] = 0;
-			return state;
-		});
-		if (uploadedImage && !gameStarted) {
-			shuffleBoard();
-			setGameStarted(true);
-		}
-	};
-
-	// ----- A* 探索の実装 -----
-	// 入力 state から解（タイル番号で表す手順の配列）を求める
-	const aStarSolve = (initialState: number[]) => {
-		const goalState = getSolvedState();
-
-		// ヒューリスティック関数：現在の状態から目標状態までの推定コスト
-		const heuristic = (state: number[]) => {
-			let h = 0;
-			// 各タイル（空白を除く）について計算
-			for (let i = 0; i < state.length; i++) {
-				const tile = state[i];
-				if (tile === 0) continue; // 空白はスキップ
-
-				// 現在位置の座標
-				const currentRow = Math.floor(i / boardDimension);
-				const currentCol = i % boardDimension;
-
-				// タイルが本来あるべき位置（タイル番号1は位置0、タイル番号2は位置1...）
-				const goalIndex = tile - 1;
-				const goalRow = Math.floor(goalIndex / boardDimension);
-				const goalCol = goalIndex % boardDimension;
-
-				// マンハッタン距離を加算
-				h += Math.abs(currentRow - goalRow) + Math.abs(currentCol - goalCol);
-			}
-			return h;
-		};
-
-		// 優先度付きキューは配列＋ソートで簡易実装
-		const openList: {
-			state: number[];
-			moves: number[];
-			g: number;
-			f: number;
-		}[] = [];
-		const closedSet = new Set<string>();
-		const nodeToString = (state: number[]) => state.join(",");
-
-		const startNode = {
-			state: initialState.slice(),
-			moves: [] as number[],
-			g: 0,
-			f: heuristic(initialState),
-		};
-		openList.push(startNode);
-		closedSet.add(nodeToString(initialState));
-
-		// 最大探索ノード数の制限（パフォーマンス対策）
-		const maxNodes = 10000;
-		let nodesExplored = 0;
-
-		while (openList.length > 0 && nodesExplored < maxNodes) {
-			nodesExplored++;
-
-			// f値が最小のノードを取得
-			openList.sort((a, b) => a.f - b.f);
-			const current = openList.shift();
-			if (!current) continue;
-
-			// ゴール状態に到達したかチェック
-			if (nodeToString(current.state) === nodeToString(goalState)) {
-				return current.moves;
-			}
-
-			// 隣接状態を取得
-			const blankIndex = current.state.indexOf(0);
-			const possibleMoves = [];
-
-			// 空白の上下左右のタイルを移動させることができる
-			// 上
-			if (blankIndex >= boardDimension) {
-				possibleMoves.push(current.state[blankIndex - boardDimension]);
-			}
-			// 下
-			if (blankIndex < totalCells - boardDimension) {
-				possibleMoves.push(current.state[blankIndex + boardDimension]);
-			}
-			// 左
-			if (blankIndex % boardDimension !== 0) {
-				possibleMoves.push(current.state[blankIndex - 1]);
-			}
-			// 右
-			if (blankIndex % boardDimension !== boardDimension - 1) {
-				possibleMoves.push(current.state[blankIndex + 1]);
-			}
-
-			// 各可能な移動について探索
-			for (const move of possibleMoves) {
-				const newState = moveTile(current.state, move);
-				if (!newState) continue;
-
-				const stateStr = nodeToString(newState);
-				if (closedSet.has(stateStr)) continue;
-
-				const newMoves = [...current.moves, move];
-				const g = current.g + 1;
-				const f = g + heuristic(newState);
-
-				closedSet.add(stateStr);
-				openList.push({ state: newState, moves: newMoves, g, f });
-			}
-		}
-
-		// 解が見つからなかった場合
-		console.warn("A* search failed or reached node limit:", nodesExplored);
-		return null;
-	};
-
 	// Auto Solve ボタンが押されたときの処理
 	const autoSolve = async () => {
 		if (isSolving) return;
 		setIsSolving(true);
 
 		try {
-			const solutionMoves = aStarSolve(tilePositions);
-			if (!solutionMoves || solutionMoves.length === 0) {
-				window.alert("解答が見つかりませんでした。");
+			// シャッフル時の移動履歴を逆順に適用
+			const solutionMoves = [...moveHistory].reverse();
+
+			if (solutionMoves.length === 0) {
+				window.alert("解答する手順がありません。再度シャッフルしてください。");
 				setIsSolving(false);
 				return;
 			}
@@ -315,7 +254,7 @@ export default function Game() {
 					currentState = newState;
 					setTilePositions(newState);
 
-					// 最後の移動でゴール状態に到達したか確認
+					// 最後の移動で完成したか確認
 					if (i === solutionMoves.length - 1) {
 						setTimeout(() => {
 							if (isSolved(newState)) {
