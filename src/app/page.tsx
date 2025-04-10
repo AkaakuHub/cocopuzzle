@@ -529,6 +529,20 @@ export default function Game() {
 				image={uploadedImage}
 			/>
 
+			<div className="text-center mb-6 flex flex-row items-center justify-center gap-4">
+				<img
+					src="/images/icon.webp"
+					alt="ココパズル"
+					className="w-24 h-24 mx-auto mb-4"
+				/>
+				<div>
+					<span className="text-2xl font-bold text-slate-800">ココパズル</span>
+					<span className="text-sm text-slate-600 font-semibold block mt-1 mb-4">
+						ここだけの自分のパズルを作ろう
+					</span>
+				</div>
+			</div>
+
 			<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
 				<div className="flex flex-col gap-3 mb-4">
 					{/* ヘッダー部分を3カラムにして中央にタイマーを配置 */}
@@ -635,7 +649,7 @@ export default function Game() {
 						画像を選択して開始！
 					</p>
 				) : (
-					<div className="relative mx-auto mt-4 w-full aspect-square max-w-[280px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[480px]">
+					<div className="relative mx-auto mt-4 w-full aspect-square max-w-[280px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[480px] border border-gray-300">
 						{tilePositions.map((p, n) => (
 							<Tile
 								key={p}
