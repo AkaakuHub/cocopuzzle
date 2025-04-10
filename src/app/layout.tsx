@@ -12,6 +12,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const NEXT_PUBLIC_URL = process.env.NEXT_PUBLIC_URL;
+
 export const metadata: Metadata = {
   title: "ココパズル | ここだけの自分のパズルを作ろう",
   description: "お気に入りの画像からパズルを作成して、タイムを競おう！",
@@ -20,7 +22,7 @@ export const metadata: Metadata = {
     description: "お気に入りの画像からパズルを作成して、タイムを競おう！",
     images: [
       {
-        url: "/images/icon.webp",
+        url: `${NEXT_PUBLIC_URL}/images/icon.webp`,
         width: 1200,
         height: 630,
         alt: "ココパズル",
@@ -34,7 +36,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ココパズル | ここだけの自分のパズルを作ろう",
     description: "お気に入りの画像からパズルを作成して、タイムを競おう！",
-    images: ["/images/icon.webp"],
+    images: [`${NEXT_PUBLIC_URL}/images/icon.webp`],
   },
 };
 
