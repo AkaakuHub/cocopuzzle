@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { clsx } from "clsx";
 
 // react-confetti を動的にインポート（サーバーサイドレンダリング対策）
 const Confetti = dynamic(() => import("react-confetti"), { ssr: false });
@@ -53,7 +54,7 @@ const Modal = ({
 			className="fixed inset-0 bg-slate-700/50 bg-opacity-50 z-50 flex items-center justify-center p-4"
 			onClick={onClose}
 		>
-			<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
+			<div className="bg-white rounded-lg shadow-lg mt-34 p-4 md:p-6 w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
 				<div className="flex justify-between items-center mb-4">
 					<h3 className="text-xl font-bold">完成図</h3>
 					<button
@@ -507,7 +508,7 @@ export default function Game() {
 	const [showCompleteImage, setShowCompleteImage] = useState(false);
 
 	return (
-		<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+		<div className="flex flex-col items-center justify-center bg-gray-50 h-[90vh] p-4">
 			{showConfetti && (
 				<Confetti
 					width={window.innerWidth}
@@ -529,147 +530,147 @@ export default function Game() {
 				image={uploadedImage}
 			/>
 
-			<div className="text-center mb-6 flex flex-row items-center justify-center gap-4">
-				<img
-					src="/images/icon.webp"
-					alt="ココパズル"
-					className="w-24 h-24 mx-auto mb-4"
-				/>
-				<div>
-					<span className="text-2xl font-bold text-slate-800">ココパズル</span>
-					<span className="text-sm text-slate-600 font-semibold block mt-1 mb-4">
-						ここだけの自分のパズルを作ろう
-					</span>
+			<div>
+				<div className="text-center mb-6 flex flex-row items-center justify-center gap-4">
+					<img
+						src="/images/icon.webp"
+						alt="ココパズル"
+						className="w-24 h-24 mb-4"
+					/>
+					<div>
+						<span className="text-2xl font-bold text-slate-800">
+							ココパズル
+						</span>
+						<span className="text-sm text-slate-600 font-semibold block mt-1 mb-4">
+							ここだけの自分のパズルを作ろう
+						</span>
+					</div>
 				</div>
-			</div>
 
-			<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
-				<div className="flex flex-col gap-3 mb-4">
-					{/* ヘッダー部分を3カラムにして中央にタイマーを配置 */}
-					<div className="grid grid-cols-3 items-center">
-						<div className="flex items-center">
-							<label className="text-sm font-medium text-gray-700">
-								マスの数
-								<select
-									value={boardDimension}
-									onChange={handleDimensionChange}
-									className="ml-2 p-1 border rounded disabled:bg-gray-400"
-									disabled={isSolving}
-								>
-									<option value="2">2x2</option>
-									<option value="3">3x3</option>
-									<option value="4">4x4</option>
-									<option value="5">5x5</option>
-									<option value="6">6x6</option>
-								</select>
-							</label>
+				<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
+					<div className="flex flex-col gap-3 mb-4">
+						<div className="grid grid-cols-3 items-center">
+							<div className="flex items-center">
+								<label className="text-sm font-medium text-gray-700">
+									マスの数
+									<select
+										value={boardDimension}
+										onChange={handleDimensionChange}
+										className="ml-2 p-1 border rounded disabled:bg-gray-400"
+										disabled={isSolving}
+									>
+										<option value="2">2x2</option>
+										<option value="3">3x3</option>
+										<option value="4">4x4</option>
+										<option value="5">5x5</option>
+										<option value="6">6x6</option>
+									</select>
+								</label>
+							</div>
+
+							<div
+								className={clsx(
+									"text-lg font-mono font-semibold text-center",
+									clearTime &&
+										"text-white bg-green-500 border-2 border-green-700 rounded-full",
+								)}
+							>
+								{formatTime(time)}
+							</div>
+
+							<div className="flex justify-end">
+								{gameStarted && (
+									<button
+										type="button"
+										className="p-2 text-slate-800 hover:bg-gray-100 rounded-full"
+										onClick={() => setShowCompleteImage(true)}
+										title="完成イメージを表示"
+									>
+										{/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="24"
+											height="24"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											className="icon icon-tabler icons-tabler-outline icon-tabler-eye"
+										>
+											<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+											<path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+											<path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
+										</svg>
+									</button>
+								)}
+							</div>
 						</div>
 
-						<div className="text-lg font-mono font-semibold text-center">
-							{formatTime(time)}
-						</div>
-
-						<div className="flex justify-end">
+						<div className="flex flex-wrap gap-2 justify-center">
 							{gameStarted && (
 								<button
 									type="button"
-									className="p-2 text-slate-800 hover:bg-gray-100 rounded-full"
-									onClick={() => setShowCompleteImage(true)}
-									title="完成イメージを表示"
+									className="px-4 py-2 bg-red-700 text-white rounded-md hover:brightness-75 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:brightness-50"
+									onClick={() => {
+										shuffleBoard();
+										setIsManualMode(true);
+										showToast("パズルをシャッフルしました！", "info");
+									}}
+									disabled={!uploadedImage || isSolving}
 								>
-									{/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="24"
-										height="24"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										className="icon icon-tabler icons-tabler-outline icon-tabler-eye"
-									>
-										<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-										<path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-										<path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
-									</svg>
+									シャッフル
+								</button>
+							)}
+							<button
+								type="button"
+								className="px-4 py-2 bg-blue-700 text-white rounded-md hover:brightness-75 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:brightness-50"
+								onClick={() => fileInputRef.current?.click()}
+								disabled={isSolving}
+							>
+								画像を選択
+							</button>
+							{uploadedImage && (
+								<button
+									type="button"
+									className="px-4 py-2 bg-green-700 text-white rounded-md hover:brightness-75 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:brightness-50"
+									onClick={autoSolve}
+									disabled={isSolving}
+								>
+									自動回答
 								</button>
 							)}
 						</div>
 					</div>
 
-					<div className="flex flex-wrap gap-2 justify-center">
-						{gameStarted && (
-							<button
-								type="button"
-								className="px-4 py-2 bg-red-700 text-white rounded-md hover:brightness-75 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:brightness-50"
-								onClick={() => {
-									shuffleBoard();
-									setIsManualMode(true);
-									showToast("パズルをシャッフルしました！", "info");
-								}}
-								disabled={!uploadedImage || isSolving}
-							>
-								シャッフル
-							</button>
-						)}
-						<button
-							type="button"
-							className="px-4 py-2 bg-blue-700 text-white rounded-md hover:brightness-75 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:brightness-50"
-							onClick={() => fileInputRef.current?.click()}
-							disabled={isSolving}
-						>
-							画像を選択
-						</button>
-						{uploadedImage && (
-							<button
-								type="button"
-								className="px-4 py-2 bg-green-700 text-white rounded-md hover:brightness-75 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:brightness-50"
-								onClick={autoSolve}
-								disabled={isSolving}
-							>
-								自動回答
-							</button>
-						)}
-					</div>
-				</div>
-
-				{isManualMode && clearTime !== null && (
-					<div className="bg-green-100 border-2 border-green-500 rounded-lg p-4 mb-4 text-center">
-						<p className="text-green-700 text-sm">CLEAR TIME</p>
-						<p className="text-3xl font-bold text-green-800 font-mono">
-							{formatTime(clearTime)}
+					{!uploadedImage ? (
+						<p className="text-center text-gray-500 my-10">
+							画像を選択して開始！
 						</p>
-					</div>
-				)}
-
-				{!uploadedImage ? (
-					<p className="text-center text-gray-500 my-10">
-						画像を選択して開始！
-					</p>
-				) : (
-					<div className="relative mx-auto mt-4 w-full aspect-square max-w-[280px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[480px] border border-gray-300">
-						{tilePositions.map((p, n) => (
-							<Tile
-								key={p}
-								num={tilePositions[n]}
-								position={n}
-								boardDimension={boardDimension}
-								onClick={(pos) => !isSolving && handleMove(pos)}
-								image={uploadedImage}
-							/>
-						))}
-					</div>
-				)}
+					) : (
+						<div className="relative mx-auto mt-4 w-full aspect-square max-w-[280px] sm:max-w-[320px] md:max-w-[400px] lg:max-w-[480px] border border-gray-300">
+							{tilePositions.map((p, n) => (
+								<Tile
+									key={p}
+									num={tilePositions[n]}
+									position={n}
+									boardDimension={boardDimension}
+									onClick={(pos) => !isSolving && handleMove(pos)}
+									image={uploadedImage}
+								/>
+							))}
+						</div>
+					)}
+				</div>
+				<input
+					type="file"
+					accept="image/*"
+					className="hidden"
+					ref={fileInputRef}
+					onChange={handleImageUpload}
+				/>
 			</div>
-			<input
-				type="file"
-				accept="image/*"
-				className="hidden"
-				ref={fileInputRef}
-				onChange={handleImageUpload}
-			/>
 		</div>
 	);
 }
