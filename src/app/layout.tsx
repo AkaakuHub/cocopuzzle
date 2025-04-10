@@ -15,6 +15,27 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ココパズル | ここだけの自分のパズルを作ろう",
   description: "お気に入りの画像からパズルを作成して、タイムを競おう！",
+  openGraph: {
+    title: "ココパズル | ここだけの自分のパズルを作ろう",
+    description: "お気に入りの画像からパズルを作成して、タイムを競おう！",
+    images: [
+      {
+        url: "/images/icon.webp",
+        width: 1200,
+        height: 630,
+        alt: "ココパズル",
+      },
+    ],
+    locale: "ja_JP",
+    type: "website",
+    siteName: "ココパズル",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ココパズル | ここだけの自分のパズルを作ろう",
+    description: "お気に入りの画像からパズルを作成して、タイムを競おう！",
+    images: ["/images/icon.webp"],
+  },
 };
 
 export default function RootLayout({
