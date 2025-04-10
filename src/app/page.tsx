@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 // react-confetti を動的にインポート（サーバーサイドレンダリング対策）
@@ -162,10 +162,16 @@ export default function Game() {
 		if (newState) {
 			setTilePositions(newState);
 			if (isSolved(newState)) {
+				// タイマーを停止し、クリアタイムを記録
+				setIsTimerRunning(false);
+				setClearTime(time);
+
 				// 完成時の処理：トースト表示と紙吹雪
-				showToast("完成！おめでとうございます！", "success");
+				showToast(
+					`完成！おめでとうございます！タイム: ${formatTime(time)}`,
+					"success",
+				);
 				setShowConfetti(true);
-				// 5秒後に紙吹雪を消す
 				setTimeout(() => {
 					setShowConfetti(false);
 				}, 5000);
@@ -182,6 +188,11 @@ export default function Game() {
 	// --- 解ける盤面の生成（合法な手順をランダムに適用するシャッフル） ---
 	// パズルをシャッフルし、その際の移動履歴を保存する
 	const shuffleBoard = () => {
+		// タイマーリセットと開始
+		setTime(0);
+		setIsTimerRunning(true);
+		setClearTime(null);
+
 		// まずは解いた状態（正解）から始める
 		let state = getSolvedState();
 		// 移動履歴をリセット
@@ -250,6 +261,9 @@ export default function Game() {
 		if (isSolving) return;
 		setIsSolving(true);
 
+		// 自動解答時はタイマーを停止
+		setIsTimerRunning(false);
+
 		try {
 			// シャッフル時の移動履歴を逆順に適用
 			const solutionMoves = [...moveHistory].reverse();
@@ -284,9 +298,12 @@ export default function Game() {
 					if (i === solutionMoves.length - 1) {
 						setTimeout(() => {
 							if (isSolved(newState)) {
-								showToast("完成！おめでとうございます！", "success");
+								setClearTime(time);
+								showToast(
+									`完成！おめでとうございます！タイム: ${formatTime(time)}`,
+									"success",
+								);
 								setShowConfetti(true);
-								// 5秒後に紙吹雪を消す
 								setTimeout(() => {
 									setShowConfetti(false);
 								}, 5000);
@@ -312,6 +329,11 @@ export default function Game() {
 
 	// --- 盤面サイズ選択処理 ---
 	const handleDimensionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		// サイズ変更時にタイマーをリセット
+		setTime(0);
+		setIsTimerRunning(false);
+		setClearTime(null);
+
 		const dim = Number.parseInt(e.target.value);
 		setBoardDimension(dim);
 		const newTotal = dim * dim;
@@ -352,6 +374,33 @@ export default function Game() {
 		}
 	};
 
+	// タイマー機能の追加
+	const [time, setTime] = useState(0);
+	const [isTimerRunning, setIsTimerRunning] = useState(false);
+	const [clearTime, setClearTime] = useState<number | null>(null);
+
+	// タイマー制御
+	useEffect(() => {
+		let intervalId: NodeJS.Timeout | null = null;
+
+		if (isTimerRunning) {
+			intervalId = setInterval(() => {
+				setTime((prevTime) => prevTime + 1);
+			}, 1000);
+		}
+
+		return () => {
+			if (intervalId) clearInterval(intervalId);
+		};
+	}, [isTimerRunning]);
+
+	// 時間のフォーマット (mm:ss)
+	const formatTime = (seconds: number): string => {
+		const minutes = Math.floor(seconds / 60);
+		const remainingSeconds = seconds % 60;
+		return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+	};
+
 	return (
 		<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
 			{showConfetti && (
@@ -371,21 +420,29 @@ export default function Game() {
 
 			<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
 				<div className="flex flex-col gap-3 mb-4">
-					<label className="text-sm font-medium text-gray-700">
-						マスの数
-						<select
-							value={boardDimension}
-							onChange={handleDimensionChange}
-							className="ml-2 p-1 border rounded"
-							disabled={isSolving}
-						>
-							<option value="2">2x2</option>
-							<option value="3">3x3</option>
-							<option value="4">4x4</option>
-							<option value="5">5x5</option>
-							<option value="6">6x6</option>
-						</select>
-					</label>
+					<div className="flex justify-between items-center">
+						<label className="text-sm font-medium text-gray-700">
+							マスの数
+							<select
+								value={boardDimension}
+								onChange={handleDimensionChange}
+								className="ml-2 p-1 border rounded"
+								disabled={isSolving}
+							>
+								<option value="2">2x2</option>
+								<option value="3">3x3</option>
+								<option value="4">4x4</option>
+								<option value="5">5x5</option>
+								<option value="6">6x6</option>
+							</select>
+						</label>
+
+						{/* タイマー表示 */}
+						<div className="text-lg font-mono font-semibold">
+							{formatTime(time)}
+						</div>
+					</div>
+
 					<div className="flex flex-wrap gap-2 justify-center">
 						{gameStarted && (
 							<button
@@ -420,6 +477,17 @@ export default function Game() {
 						)}
 					</div>
 				</div>
+
+				{/* クリアタイム表示 */}
+				{clearTime !== null && (
+					<div className="bg-green-100 border-2 border-green-500 rounded-lg p-4 mb-4 text-center">
+						<p className="text-green-700 text-sm">CLEAR TIME</p>
+						<p className="text-3xl font-bold text-green-800 font-mono">
+							{formatTime(clearTime)}
+						</p>
+					</div>
+				)}
+
 				{!uploadedImage ? (
 					<p className="text-center text-gray-500 my-10">
 						画像を選択して開始！

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ココパズル | 画像から自分だけのパズルを作ろう",
-  description: "お気に入りの画像からジグソーパズルを作成して、タイムを競おう！",
+  title: "ココパズル | ここだけの自分のパズルを作ろう",
+  description: "お気に入りの画像からパズルを作成して、タイムを競おう！",
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" suppressHydrationWarning>
+    <html lang="ja">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
