@@ -52,8 +52,7 @@ const Modal = ({
   if (!isOpen) return null;
 
   return (
-    <button
-      type="button"
+    <div
       className="fixed inset-0 bg-slate-700/50 bg-opacity-50 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
@@ -83,7 +82,7 @@ const Modal = ({
           )}
         </div>
       </div>
-    </button>
+    </div>
   );
 };
 
