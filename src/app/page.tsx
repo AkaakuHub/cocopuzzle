@@ -556,30 +556,32 @@ export default function Game() {
 						</div>
 
 						<div className="flex justify-end">
-							<button
-								type="button"
-								className="p-2 text-slate-800 hover:bg-gray-100 rounded-full"
-								onClick={() => setShowCompleteImage(true)}
-								title="完成イメージを表示"
-							>
-								{/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="24"
-									height="24"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									className="icon icon-tabler icons-tabler-outline icon-tabler-eye"
+							{gameStarted && (
+								<button
+									type="button"
+									className="p-2 text-slate-800 hover:bg-gray-100 rounded-full"
+									onClick={() => setShowCompleteImage(true)}
+									title="完成イメージを表示"
 								>
-									<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-									<path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-									<path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
-								</svg>
-							</button>
+									{/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="24"
+										height="24"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										className="icon icon-tabler icons-tabler-outline icon-tabler-eye"
+									>
+										<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+										<path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+										<path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
+									</svg>
+								</button>
+							)}
 						</div>
 					</div>
 
@@ -587,7 +589,7 @@ export default function Game() {
 						{gameStarted && (
 							<button
 								type="button"
-								className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:brightness-50"
+								className="px-4 py-2 bg-red-700 text-white rounded-md hover:brightness-75 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:brightness-50"
 								onClick={() => {
 									shuffleBoard();
 									setIsManualMode(true);
@@ -600,7 +602,7 @@ export default function Game() {
 						)}
 						<button
 							type="button"
-							className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:brightness-50"
+							className="px-4 py-2 bg-blue-700 text-white rounded-md hover:brightness-75 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:brightness-50"
 							onClick={() => fileInputRef.current?.click()}
 							disabled={isSolving}
 						>
@@ -609,7 +611,7 @@ export default function Game() {
 						{uploadedImage && (
 							<button
 								type="button"
-								className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:brightness-50"
+								className="px-4 py-2 bg-green-700 text-white rounded-md hover:brightness-75 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:brightness-50"
 								onClick={autoSolve}
 								disabled={isSolving}
 							>
