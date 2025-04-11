@@ -7,6 +7,7 @@ import type { ToastType } from "@/types";
 import { clsx } from "clsx";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import { useWindowSize } from "react-use";
 
 // react-confetti を動的にインポート（サーバーサイドレンダリング対策）
 const Confetti = dynamic(() => import("react-confetti"), { ssr: false });
@@ -102,9 +103,6 @@ export default function Game() {
 				// 完成時の処理：トースト表示と紙吹雪
 				showToast("完成！おめでとうございます！", "success");
 				setShowConfetti(true);
-				setTimeout(() => {
-					setShowConfetti(false);
-				}, 5000);
 			}
 		}
 	};
@@ -233,9 +231,6 @@ export default function Game() {
 								setClearTime(time);
 								showToast("完成！", "success");
 								setShowConfetti(true);
-								setTimeout(() => {
-									setShowConfetti(false);
-								}, 5000);
 							}
 							setIsSolving(false);
 						}, 300);
@@ -392,15 +387,15 @@ export default function Game() {
 
 	// モーダル表示制御
 	const [showCompleteImage, setShowCompleteImage] = useState(false);
+	const { width, height } = useWindowSize();
 
 	return (
 		<div className="flex flex-col items-center justify-center h-[90vh] p-4">
 			{showConfetti && (
 				<Confetti
-					width={window.innerWidth}
-					height={window.innerHeight}
-					recycle={false}
-					numberOfPieces={500}
+					width={width}
+					height={height}
+					numberOfPieces={showConfetti ? 200 : 0}
 				/>
 			)}
 
@@ -503,6 +498,7 @@ export default function Game() {
 									onClick={() => {
 										shuffleBoard();
 										setIsManualMode(true);
+										setShowConfetti(false);
 										showToast("パズルをシャッフルしました！", "info");
 									}}
 									disabled={!uploadedImage || isSolving}
