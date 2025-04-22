@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ココパズル (CocoPuzzle)
 
-## Getting Started
+お気に入りの画像からオリジナルのスライドパズルを作成し、タイムアタックで遊べるWebアプリです。
 
-First, run the development server:
+## 特長
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **画像アップロード**: 好きな画像をアップロードしてパズルを作成できます。
+- **盤面サイズ選択**: 2x2〜6x6まで、難易度を自由に選択可能。
+- **自動シャッフル**: 解ける状態になるように自動でシャッフルされます。
+- **タイマー機能**: クリアタイムを計測し、自己ベストを目指せます。
+- **自動解答**: シャッフル時の履歴を使って自動で解答する機能付き。
+- **BGM再生**: ゲーム中はBGMがループ再生され、オン/オフ切り替えも可能。
+- **トースト通知・紙吹雪演出**: クリア時やエラー時に分かりやすく通知。
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## セットアップ
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **依存パッケージのインストール**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   pnpm install
+   ```
 
-## Learn More
+2. **開発サーバー起動**
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   pnpm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **ブラウザでアクセス**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```
+   http://localhost:3000
+   ```
 
-## Deploy on Vercel
+## 主な技術
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [Next.js](https://nextjs.org/)
+- React
+- TypeScript
+- Tailwind CSS
+- [react-confetti](https://www.npmjs.com/package/react-confetti)
+- [react-use](https://www.npmjs.com/package/react-use)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 使い方
+
+1. 「画像を選択」ボタンから画像をアップロード
+2. 盤面サイズを選択（2x2〜6x6）
+3. 「シャッフル」ボタンでゲームスタート
+4. タイルをクリックして空白と入れ替え、元の画像を完成させよう
+5. クリアするとタイムが表示され、紙吹雪とトーストでお祝い！
+
+## ライセンス
+
+MIT
+
+---
+
+© 2025 AkaakuHub

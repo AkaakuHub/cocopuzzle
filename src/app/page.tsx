@@ -389,8 +389,44 @@ export default function Game() {
 	const [showCompleteImage, setShowCompleteImage] = useState(false);
 	const { width, height } = useWindowSize();
 
+	const [isSoundOn, setIsSoundOn] = useState(false);
+	const audioRef = useRef<HTMLAudioElement | null>(null);
+
+	// BGM再生関数
+	const playBgm = () => {
+		if (audioRef.current) {
+			audioRef.current.currentTime = 0;
+			audioRef.current.volume = isSoundOn ? 0.5 : 0;
+			audioRef.current.loop = true;
+			audioRef.current.play().catch(() => {});
+		}
+	};
+
+	// 音量切り替え
+	const toggleSound = () => {
+		setIsSoundOn((prev) => {
+			const next = !prev;
+			if (audioRef.current) {
+				audioRef.current.volume = next ? 0.5 : 0;
+			}
+			return next;
+		});
+	};
+
+	// ゲーム開始時にBGM再生
+	useEffect(() => {
+		if (gameStarted && isSoundOn) {
+			playBgm();
+		}
+		// オフ時は停止
+		if (!isSoundOn && audioRef.current) {
+			audioRef.current.pause();
+		}
+	}, [gameStarted, isSoundOn]);
+
 	return (
 		<div className="flex flex-col items-center justify-center h-[90vh] p-4">
+			<audio ref={audioRef} src={"/sounds/bgm.mp3"} preload="auto" />
 			{showConfetti && (
 				<Confetti
 					width={width}
@@ -426,6 +462,14 @@ export default function Game() {
 							ここだけの自分のパズルを作ろう
 						</span>
 					</div>
+					<button
+						type="button"
+						className="absolute top-4 right-4 z-50 px-3 py-2 bg-gray-300 rounded-full shadow hover:bg-gray-400"
+						onClick={toggleSound}
+						aria-label={isSoundOn ? "サウンドオフ" : "サウンドオン"}
+					>
+						{isSoundOn ? "🔊" : "🔇"}
+					</button>
 				</div>
 
 				<div className="bg-white rounded-lg shadow-lg p-4 md:p-6 w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
